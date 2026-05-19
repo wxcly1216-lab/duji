@@ -89,7 +89,7 @@ a { color: inherit; text-decoration: none; }
 .dr-screen {
   position: relative; z-index: 2;
   min-height: 100%;
-  padding-bottom: 24px;
+  padding-bottom: 110px; /* clearance for fixed tab bar (~64px + breathing) */
 }
 
 /* ── Typography roles ── */
@@ -387,9 +387,24 @@ a { color: inherit; text-decoration: none; }
 .stats-row .s .n {
   font-family: var(--font-serif); font-weight: 700; font-size: 26px; line-height: 1;
   color: var(--ink);
+  display: flex; align-items: baseline; gap: 4px;
 }
 .stats-row .s .n sup { font-size: 11px; font-weight: 400; color: var(--ink-3); margin-left: 2px; }
-.stats-row .s .l { font-family: var(--font-wenkai); font-size: 11px; color: var(--ink-3); margin-top: 4px; letter-spacing: 0.05em; }
+.stats-row .s .l {
+  font-family: var(--font-wenkai); font-size: 11px; color: var(--ink-3); margin-top: 4px;
+  letter-spacing: 0.05em;
+  display: flex; align-items: center; gap: 4px;
+}
+.stats-row .s .l::after {
+  content: '›';
+  font-family: var(--font-serif);
+  color: var(--ink-4);
+  font-size: 13px;
+  line-height: 1;
+  transition: transform .15s, color .15s;
+}
+.stats-row .s:active .l::after,
+.stats-row .s:hover .l::after { color: var(--vermillion); transform: translateX(2px); }
 
 /* ── Currently reading card ── */
 .cr-card {
