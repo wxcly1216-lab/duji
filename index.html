@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>读迹 · Reading Portfolio</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css" />
+
+<template id="__bundler_thumbnail" data-bg-color="#F0E6D2">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <!-- paper grain backdrop -->
+    <rect width="1200" height="800" fill="#F0E6D2" />
+    <!-- decorative ornament rule -->
+    <line x1="240" y1="160" x2="960" y2="160" stroke="#C9B79A" stroke-width="1" />
+    <line x1="240" y1="640" x2="960" y2="640" stroke="#C9B79A" stroke-width="1" />
+    <!-- 读 character (left) -->
+    <text x="430" y="500" font-family="Songti SC, serif" font-size="320" font-weight="700" fill="#2C231A" text-anchor="middle">读</text>
+    <!-- 迹 character (right) -->
+    <text x="770" y="500" font-family="Songti SC, serif" font-size="320" font-weight="700" fill="#2C231A" text-anchor="middle">迹</text>
+    <!-- vermillion stamp under -->
+    <rect x="560" y="560" width="80" height="80" fill="#B23A2E" />
+    <rect x="572" y="572" width="56" height="56" fill="none" stroke="#F0E6D2" stroke-width="3" />
+    <text x="600" y="618" font-family="Songti SC, serif" font-size="44" font-weight="700" fill="#F0E6D2" text-anchor="middle">读</text>
+  </svg>
+</template>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+html, body {
+  margin: 0;
+  background: #2A2520;
+  min-height: 100vh;
+  font-family: 'Noto Serif SC', serif;
+}
+#stage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  position: relative;
+}
+#stage::before {
+  /* desk vignette */
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(60,45,30,0) 30%, rgba(20,15,10,0.45) 100%);
+  pointer-events: none;
+}
+.phone-shell {
+  width: 402px;
+  height: 874px;
+  border-radius: 56px;
+  background: #1a1814;
+  padding: 12px;
+  box-shadow:
+    0 0 0 2px #0c0a08,
+    0 30px 80px rgba(0,0,0,0.55),
+    inset 0 0 0 1px rgba(255,255,255,0.04);
+  position: relative;
+  z-index: 1;
+}
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 44px;
+  overflow: hidden;
+  background: var(--paper, #F0E6D2);
+  position: relative;
+  isolation: isolate;
+}
+/* dynamic island */
+.phone-shell::after {
+  content: '';
+  position: absolute;
+  top: 22px; left: 50%;
+  transform: translateX(-50%);
+  width: 112px; height: 32px;
+  background: #000;
+  border-radius: 18px;
+  z-index: 5;
+}
+/* status bar inside screen */
+.status-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50px;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 28px 12px;
+  justify-content: space-between;
+  color: var(--ink, #2C231A);
+  font-family: 'SF Pro Display', 'Noto Sans SC', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  z-index: 500;
+  pointer-events: none;
+}
+#root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.scroll-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  padding-top: 50px;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-container::-webkit-scrollbar { display: none; }
+
+/* Allow internal app to fill */
+.dr-app { width: 100%; min-height: 100%; }
+
+@media (max-width: 460px) {
+  #stage { padding: 0; }
+  .phone-shell {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  .phone-screen { border-radius: 0; }
+  .phone-shell::after { display: none; }
+}
+</style>
+</head>
+<body style="font-size: 8px">
+
+<div id="stage">
+  <div class="phone-shell">
+    <div class="phone-screen">
+      <div class="status-bar">
+        <span>9:41</span>
+        <span style="display:flex; gap:6px; align-items:center;">
+          <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><path d="M1 8.5h2v2H1zM5 6.5h2v4H5zM9 4h2v6.5H9zM13 1.5h2v9h-2z"/></svg>
+          <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3.5c2-2.5 10-2.5 12 0M4 5.5c1.5-1.5 7-1.5 8.5 0M6 7.5c1-1 3-1 4 0"/><circle cx="8" cy="9.2" r="0.6" fill="currentColor"/></svg>
+          <svg width="24" height="11" viewBox="0 0 24 11" fill="none"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" stroke="currentColor" fill="none"/><rect x="2" y="2" width="16" height="7" rx="1" fill="currentColor"/><rect x="21" y="3.5" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
+        </span>
+      </div>
+      <div class="scroll-container" id="scroll-container">
+        <div id="root"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Data first -->
+<script src="data.js"></script>
+
+<!-- Components -->
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="journey.jsx"></script>
+<script type="text/babel" src="screens.jsx"></script>
+<script type="text/babel" src="book-detail.jsx"></script>
+<script type="text/babel" src="onboarding.jsx"></script>
+
+<!-- Tweaks framework (provides global useTweaks, TweaksPanel, etc.) -->
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+
+<!-- App entry -->
+<script type="text/babel" src="app.jsx"></script>
+
+</body>
+</html>
