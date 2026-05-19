@@ -15,6 +15,10 @@ function HomeScreen({ nav, layoutVariant }) {
   const hour = today.getHours();
   const greet = hour < 11 ? '晨光好' : hour < 14 ? '午安' : hour < 18 ? '午后好' : '晚来风';
 
+  const [statSheet, setStatSheet] = useState(null);
+  const openStat = (kind) => setStatSheet(kind);
+  const closeStat = () => setStatSheet(null);
+
   const reading = window.SHELF.reading.map((s) => ({ ...s, book: window.BOOKS.find((b) => b.id === s.bookId) }));
 
   // Recent reflections — most recent few
@@ -67,19 +71,19 @@ function HomeScreen({ nav, layoutVariant }) {
 
       {/* Stats */}
       <div className="stats-row">
-        <div className="s">
+        <div className="s" onClick={() => openStat('finished')} style={{cursor:'pointer'}}>
           <div className="n num-em">{u.finished}<sup>/ {u.goal}</sup></div>
           <div className="l">读完 · 学期</div>
         </div>
-        <div className="s">
+        <div className="s" onClick={() => openStat('reading')} style={{cursor:'pointer'}}>
           <div className="n num-em">{u.reading}</div>
           <div className="l">在读</div>
         </div>
-        <div className="s">
+        <div className="s" onClick={() => openStat('quotes')} style={{cursor:'pointer'}}>
           <div className="n num-em">{u.quotesCount}</div>
           <div className="l">金句</div>
         </div>
-        <div className="s">
+        <div className="s" onClick={() => openStat('reflections')} style={{cursor:'pointer'}}>
           <div className="n num-em">{u.reflectionsCount}</div>
           <div className="l">反思</div>
         </div>
@@ -188,6 +192,9 @@ function HomeScreen({ nav, layoutVariant }) {
           </div>
         </>
       )}
+
+      {/* Stat detail sheet */}
+      {statSheet && <StatSheet kind={statSheet} onClose={closeStat} nav={nav} />}
     </div>
   );
 }
@@ -362,6 +369,159 @@ function FilterChip({ on, onClick, cn, en, level }) {
       <span style={{fontFamily:'var(--font-en)', fontStyle:'italic', fontSize:10, opacity:0.7}}>{en}</span>
     </button>
   );
+}
+
+// ─────────────────────────────────────────────
+// STAT DETAIL SHEET (bottom sheet)
+// ─────────────────────────────────────────────
+function StatSheet({ kind, onClose, nav }) {
+  const titles = {
+    finished:    { cn: '读完的书',  en: 'Finished books',       count: window.SHELF.finished.length },
+    reading:     { cn: '正在读',    en: 'Currently reading',    count: window.SHELF.reading.length },
+    quotes:      { cn: '金句墙',    en: 'Golden sentences',     count: window.USER.quotesCount },
+    reflections: { cn: '反思记录',  en: 'Reflection entries',   count: window.USER.reflectionsCount },
+  }[kind];
+
+  // Build content per kind
+  let content = null;
+  if (kind === 'finished') {
+    const items = window.SHELF.finished
+      .slice().reverse()
+      .map((s) => ({ ...s, book: window.BOOKS.find((b) => b.id === s.bookId) }));
+    content = (
+      <div style={{display:'flex', flexDirection:'column', gap:14}}>
+        {items.map((it, i) => (
+          <div key={i} className="dr-card" style={{display:'flex', gap:14, cursor:'pointer', padding:12}}
+               onClick={() => { onClose(); nav('book', it.bookId); }}>
+            <BookCover book={it.book} size="md" />
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:'flex', alignItems:'center', gap:6}}>
+                <Tag level={it.book.level}>{window.LEVELS.find(l => l.id === it.book.level).cn}</Tag>
+                <Stars n={it.stars} />
+              </div>
+              <div style={{fontFamily:'var(--font-serif)', fontWeight:700, fontSize:15, color:'var(--ink)', marginTop:6}}>
+                {it.book.cn}
+              </div>
+              <div style={{fontFamily:'var(--font-en)', fontStyle:'italic', fontSize:11, color:'var(--ink-3)', marginTop:2}}>
+                {it.book.en}
+              </div>
+              <div style={{fontFamily:'var(--font-en)', fontSize:11, color:'var(--vermillion)', marginTop:8, letterSpacing:'0.1em'}}>
+                ✓ {it.date}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  } else if (kind === 'reading') {
+    const items = window.SHELF.reading.map((s) => ({ ...s, book: window.BOOKS.find((b) => b.id === s.bookId) }));
+    content = (
+      <div style={{display:'flex', flexDirection:'column', gap:14}}>
+        {items.map((it, i) => (
+          <div key={i} className="dr-card" style={{display:'flex', gap:14, cursor:'pointer', padding:12}}
+               onClick={() => { onClose(); nav('book', it.bookId); }}>
+            <BookCover book={it.book} size="md" />
+            <div style={{flex:1, minWidth:0}}>
+              <Tag level={it.book.level}>{window.LEVELS.find(l => l.id === it.book.level).cn}</Tag>
+              <div style={{fontFamily:'var(--font-serif)', fontWeight:700, fontSize:15, color:'var(--ink)', marginTop:6}}>
+                {it.book.cn}
+              </div>
+              <div style={{fontFamily:'var(--font-en)', fontStyle:'italic', fontSize:11, color:'var(--ink-3)', marginTop:2}}>
+                {it.book.en}
+              </div>
+              <div style={{fontFamily:'var(--font-wenkai)', fontSize:11.5, color:'var(--ink-2)', marginTop:8}}>
+                第 {it.chapter} 章 · {it.book.chapters[it.chapter-1]?.t.split(' · ')[1] || it.book.chapters[it.chapter-1]?.t}
+              </div>
+              <div style={{display:'flex', alignItems:'center', gap:8, marginTop:8}}>
+                <div style={{flex:1, height:2, background:'var(--paper-3)', borderRadius:1}}>
+                  <div style={{width: `${it.progress}%`, height:'100%', background:'var(--vermillion)'}} />
+                </div>
+                <span style={{fontFamily:'var(--font-en)', fontStyle:'italic', fontSize:11, color:'var(--vermillion)'}}>{it.progress}%</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  } else if (kind === 'quotes') {
+    const quotes = [];
+    Object.entries(window.REFLECTIONS).forEach(([bid, list]) => {
+      list.forEach((r) => {
+        if (r.quote) quotes.push({ ...r, bookId: bid, book: window.BOOKS.find((b) => b.id === bid) });
+      });
+    });
+    content = (
+      <div style={{display:'flex', flexDirection:'column', gap:12}}>
+        {quotes.length === 0 && (
+          <div style={{textAlign:'center', padding:'32px 0', fontFamily:'var(--font-en)', fontStyle:'italic', color:'var(--ink-3)'}}>
+            No quotes yet.
+          </div>
+        )}
+        {quotes.map((q, i) => (
+          <div key={i} className="quote-card" style={{cursor:'pointer'}}
+               onClick={() => { onClose(); nav('book', q.bookId); }}>
+            <div className="q">{q.quote}</div>
+            <div className="src">
+              <span>{q.book.cn}{q.type === 'chapter' ? ` · 第 ${q.idx + 1} 节` : ''}</span>
+              <span>{q.date?.slice(5).replace('-','.')}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  } else if (kind === 'reflections') {
+    const refs = [];
+    Object.entries(window.REFLECTIONS).forEach(([bid, list]) => {
+      list.forEach((r) => refs.push({ ...r, bookId: bid, book: window.BOOKS.find((b) => b.id === bid) }));
+    });
+    refs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    content = (
+      <div style={{display:'flex', flexDirection:'column', gap:14}}>
+        {refs.map((r, i) => (
+          <div key={i} className="dr-card" style={{padding:14, cursor:'pointer'}}
+               onClick={() => { onClose(); nav('book', r.bookId); }}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
+              <div style={{fontFamily:'var(--font-serif)', fontWeight:700, fontSize:13, color:'var(--ink)'}}>
+                {r.book.cn} {r.type === 'chapter' ? `· 第 ${r.idx + 1} 节` : '· 随笔'}
+              </div>
+              <div style={{fontFamily:'var(--font-en)', fontSize:10, color:'var(--ink-3)', letterSpacing:'0.1em'}}>
+                {r.date?.slice(5).replace('-','.')} · {r.mood}
+              </div>
+            </div>
+            {r.quote && (
+              <div style={{fontFamily:'var(--font-wenkai)', fontStyle:'italic', fontSize:12.5, color:'var(--ink-2)', marginTop:8, paddingLeft:10, borderLeft:'2px solid var(--vermillion)'}}>
+                「{r.quote}」
+              </div>
+            )}
+            {r.thinking && (
+              <div style={{fontFamily:'var(--font-wenkai)', fontSize:12.5, color:'var(--ink-2)', marginTop:8, lineHeight:1.7}}>
+                {r.thinking}
+              </div>
+            )}
+            {r.stars && <div style={{marginTop:8}}><Stars n={r.stars} /></div>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return ReactDOM.createPortal((
+    <div className="rf-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="rf-modal" onClick={(e) => e.stopPropagation()} style={{height: '85%'}}>
+        <div className="handle" />
+        <div className="rf-head">
+          <div>
+            <div className="src">{titles.en} · {titles.count}</div>
+            <div className="ch">{titles.cn}</div>
+          </div>
+          <button className="close" onClick={onClose}>×</button>
+        </div>
+        <div className="rf-body" style={{paddingTop:14}}>
+          {content}
+        </div>
+      </div>
+    </div>
+  ), document.querySelector('.phone-screen') || document.body);
 }
 
 // ─────────────────────────────────────────────
